@@ -3,9 +3,11 @@ from django.http import HttpRequest, HttpResponse, Http404
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.core.paginator import Paginator
 from .models import Post, Category
 
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 
 
 def get_published_posts():
@@ -16,22 +18,25 @@ def get_published_posts():
         & Q(pub_date__lte=current_time)
     ).select_related('author', 'location', 'category')
     return posts
-
-class UserProfile(DetailView):
-    model = User
-    context_object_name = 'profile'
+    
+class UserProfile(ListView):
+    model = Post
     template_name = 'blog/profile.html'
+    paginate_by = settings.PAGINATOR_PROFILE
 
-    def get_object(self):
+    def get_user(self):
         return get_object_or_404(User, username=self.kwargs['username'])
+    
+    def get_queryset(self):
+        return get_published_posts().filter(
+            author=self.get_user()
+        )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_obj'] = get_published_posts().filter(
-            author=self.get_object()
-        )
+        context['profile'] = self.get_user()
         return context
-
+        
 
 
 
