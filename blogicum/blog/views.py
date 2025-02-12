@@ -85,27 +85,35 @@ class PostDelete(PostBase, DeleteView):
     pass
 
 
-def index(request: HttpRequest) -> HttpResponse:
+
+class PostList(ListView):
+    model = Post
     template_name = 'blog/index.html'
-    posts = get_published_posts()[:5]
-    context = {'post_list': posts}
-    return render(request, template_name, context)
+    paginate_by = settings.PAGINATOR_MAIN_PAGE
+    queryset = get_published_posts()
 
 
-def category_posts(request: HttpRequest, category_slug: str) -> HttpResponse:
+class CategoryList(ListView):
+    model = Category
     template_name = 'blog/category.html'
-    category = get_object_or_404(Category, slug=category_slug)
-    if not category.is_published:
-        raise Http404('Категория не публикуется!')
-    posts = category.posts.filter(
-        is_published=True,
-        pub_date__lte=timezone.now()
-    )
-    context = {
-        'category': category_slug,
-        'post_list': posts
-    }
-    return render(request, template_name, context)
+    paginate_by = settings.PAGINATOR_CATEGORY_PAGE
+
+    def get_category(self):
+        return get_object_or_404(Category, slug=self.kwargs['category_slug'])
+    
+    def get_queryset(self):
+        category = self.get_category()
+        if not category.is_published:
+            raise Http404('Категория не публикуется!')
+        return category.posts.filter(
+            is_published=True,
+            pub_date__lte=timezone.now()
+        ).select_related('author', 'location')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.get_category()
+        return context
 
 
 def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
