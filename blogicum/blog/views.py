@@ -3,11 +3,14 @@ from django.http import HttpRequest, HttpResponse, Http404
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserChangeForm
 from django.conf import settings
-from django.core.paginator import Paginator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from .form import PostForm
 from .models import Post, Category
 
-from django.views.generic import DetailView, ListView
+from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
 
 def get_published_posts():
@@ -38,7 +41,48 @@ class UserProfile(ListView):
         return context
         
 
+class PostCreate(LoginRequiredMixin, CreateView):
+    model = Post
+    fields = '__all__'
+    template_name = 'blog/create.html'
+    
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
+class EditProfile(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = UserChangeForm
+    template_name = 'blog/user.html'
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse_lazy('blog:profile', kwargs={'username': self.request.user.username})
+    
+
+class PostBase(LoginRequiredMixin):
+    model = Post
+    template_name = 'blog/create.html'
+
+    # def get_success_url(self):
+    #     comment = self.get_object()
+    #     return reverse(
+    #         'news:detail', kwargs={'pk': comment.news.pk}
+    #     ) + '#comments'
+
+    def get_queryset(self):
+        """Пользователь может работать только со своими комментариями."""
+        return self.model.objects.filter(author=self.request.user)
+
+class PostEdit(PostBase, UpdateView):
+    form_class = PostForm
+
+class PostDelete(PostBase, DeleteView):
+    pass
 
 
 def index(request: HttpRequest) -> HttpResponse:
