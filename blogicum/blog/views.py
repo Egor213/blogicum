@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpRequest, HttpResponse, Http404
 from django.db.models import Q
 from django.utils import timezone
@@ -48,21 +48,6 @@ class UserProfile(ListView):
         return context
         
 
-class PostCreate(LoginRequiredMixin, CreateView):
-    model = Post
-    form_class = PostForm
-    template_name = 'blog/create.html'
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
-
 class ProfileEdit(LoginRequiredMixin, UpdateView):
     model = User
     form_class = CustomUserChangeForm
@@ -78,29 +63,56 @@ class ProfileEdit(LoginRequiredMixin, UpdateView):
         )
     
 
-class PostBase(LoginRequiredMixin):
+class PostLoginModelMixin(LoginRequiredMixin):
     model = Post
     template_name = 'blog/create.html'
 
+
+class PostBaseMixin(PostLoginModelMixin):
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={'post_id': self.object.pk}
+        )
+    
+    def dispatch(self, request, *args, **kwargs):
+        post = self.get_object()
+        if request.user != post.author:
+            return redirect(
+                'blog:post_detail',
+                post_id=kwargs['post_id']
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return self.model.objects.filter(author=self.request.user)
+    
+    def get_object(self, queryset=None):
+        return get_object_or_404(Post, pk=self.kwargs['post_id'])
+
+
+class PostEdit(PostBaseMixin, UpdateView):
+    form_class = PostForm
+
+
+class PostDelete(PostBaseMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy(
             'blog:index'
         )
-
-    def get_queryset(self):
-        """Пользователь может работать только со своими комментариями."""
-        return self.model.objects.filter(author=self.request.user)
-
-class PostEdit(PostBase, UpdateView):
+    
+class PostCreate(PostLoginModelMixin, CreateView):
     form_class = PostForm
 
-    def get_object(self, queryset=None):
-        return get_object_or_404(Post, author=self.request.user, pk=self.kwargs['post_id'])
-
-class PostDelete(PostBase, DeleteView):
-    def get_object(self, queryset=None):
-        return get_object_or_404(Post, author=self.request.user, pk=self.kwargs['post_id'])
-
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={'post_id': self.object.pk}
+        )
 
 
 class PostList(ListView):
@@ -137,10 +149,11 @@ def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
     template_name = 'blog/detail.html'
     post = get_object_or_404(Post, pk=post_id)
     current_time = timezone.now()
-    if post.pub_date > current_time:
-        raise Http404('Данная запись еще не опубликована!')
-    if not post.is_published or not post.category.is_published:
-        raise Http404('Публикация недоступна!')
+    if post.author != request.user:
+        if not post.is_published or not post.category.is_published:
+            raise Http404('Публикация недоступна!')
+        if post.pub_date > current_time:
+            raise Http404('Данная запись еще не опубликована!')
     context = {
         'post': post
     }
