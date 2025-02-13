@@ -1,12 +1,10 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpRequest
+from django.views.generic import TemplateView
 
 
-def about(request: HttpRequest) -> HttpResponse:
-    template_name: str = 'pages/about.html'
-    return render(request, template_name)
+class AboutView(TemplateView):
+    template_name = 'pages/about.html'
 
-
-def rules(request: HttpRequest) -> HttpResponse:
-    template_name: str = 'pages/rules.html'
-    return render(request, template_name)
+class RulesView(TemplateView):
+    template_name = 'pages/rules.html'
