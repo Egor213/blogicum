@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+
 User = get_user_model()
 
 
-class BaseModel(models.Model):
+class PublishedBaseModel(models.Model):
     is_published = models.BooleanField(
         verbose_name='Опубликовано',
         default=True,
@@ -22,15 +23,27 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+class PostBaseModel(PublishedBaseModel):
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        verbose_name='Автор публикации',
+        related_name='%(class)ss'
+    )
+    text = models.TextField('Текст', null=False, blank=False)
 
-class Post(BaseModel):
+    class Meta:
+        abstract = True
+
+class Post(PostBaseModel):
     title = models.CharField(
         verbose_name='Заголовок',
         max_length=256,
         null=False,
         blank=False
     )
-    text = models.TextField('Текст', null=False, blank=False)
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
         null=False,
@@ -39,14 +52,6 @@ class Post(BaseModel):
             'Если установить дату и время в будущем — '
             'можно делать отложенные публикации.'
         )
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=False,
-        blank=False,
-        verbose_name='Автор публикации',
-        related_name='posts'
     )
     location = models.ForeignKey(
         'Location',
@@ -74,7 +79,7 @@ class Post(BaseModel):
         return f'{self.title}, {self.author}'
     
 
-class Category(BaseModel):
+class Category(PublishedBaseModel):
     title = models.CharField(
         verbose_name='Заголовок',
         max_length=256,
@@ -105,7 +110,7 @@ class Category(BaseModel):
         return self.title
 
 
-class Location(BaseModel):
+class Location(PublishedBaseModel):
     name = models.CharField(
         verbose_name='Название места',
         max_length=256,
@@ -120,7 +125,7 @@ class Location(BaseModel):
     def __str__(self):
         return self.name
 
-class Comment(models.Model):
+class Comment(PostBaseModel):
     post = models.ForeignKey(
         Post,
         verbose_name='Пост',
@@ -129,19 +134,10 @@ class Comment(models.Model):
         blank=False,
         related_name='comments'
     )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=False,
-        blank=False,
-        verbose_name='Автор публикации',
-        related_name='comments'
-    )
-    text = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
+    is_published = None
 
     class Meta:
-        ordering = ('created',)
+        ordering = ('-created_at',)
 
     def __str__(self):
         return self.text[:50]
