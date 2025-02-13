@@ -75,6 +75,7 @@ class Post(PostBaseModel):
         blank=True
     )
 
+
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
@@ -142,7 +143,7 @@ class Comment(PostBaseModel):
     is_published = None
 
     class Meta:
-        ordering = ('-created_at',)
+        ordering = ('created_at',)
 
     def __str__(self):
         return self.text[:50]

@@ -12,14 +12,12 @@ from .models import Post, Category, Comment
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
 
-def get_published_posts():
+def get_published_posts(object):
     current_time = timezone.now()
-    posts = Post.objects.filter(
-        Q(is_published=True)
-        & Q(category__is_published=True)
-        & Q(pub_date__lte=current_time)
-    ).select_related('author', 'location', 'category')
-    return posts
+    return object.filter(
+            Q(is_published=True)
+            & Q(pub_date__lte=current_time)
+        ).select_related('author', 'location', 'category')
 
 
     
@@ -38,8 +36,9 @@ class UserProfile(ListView):
             return Post.objects.filter(
                 author=current_user
             ).select_related('author', 'location', 'category')
-        return get_published_posts().filter(
-            author=current_user
+        return get_published_posts(Post.objects).filter(
+            Q(author=current_user)
+            & Q(category__is_published=True)
         )
     
     def get_context_data(self, **kwargs):
@@ -119,7 +118,9 @@ class PostList(ListView):
     model = Post
     template_name = 'blog/index.html'
     paginate_by = settings.PAGINATOR_MAIN_PAGE
-    queryset = get_published_posts()
+    queryset = get_published_posts(Post.objects).filter(
+        category__is_published=True
+    )
 
 
 class CategoryList(ListView):
@@ -134,10 +135,7 @@ class CategoryList(ListView):
         category = self.get_category()
         if not category.is_published:
             raise Http404('Категория не публикуется!')
-        return category.posts.filter(
-            is_published=True,
-            pub_date__lte=timezone.now()
-        ).select_related('author', 'location')
+        return get_published_posts(category.posts)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
