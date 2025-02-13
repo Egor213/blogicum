@@ -7,8 +7,8 @@ from django.contrib.auth.forms import UserChangeForm
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .form import PostForm
-from .models import Post, Category
+from .form import PostForm, CommentForm
+from .models import Post, Category, Comment
 
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
@@ -43,7 +43,7 @@ class UserProfile(ListView):
 
 class PostCreate(LoginRequiredMixin, CreateView):
     model = Post
-    fields = '__all__'
+    form_class = PostForm
     template_name = 'blog/create.html'
     
     def get_success_url(self):
@@ -61,7 +61,10 @@ class EditProfile(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def get_success_url(self):
-        return reverse_lazy('blog:profile', kwargs={'username': self.request.user.username})
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
     
 
 class PostBase(LoginRequiredMixin):
@@ -129,3 +132,8 @@ def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
     }
     return render(request, template_name, context)
 
+
+# class UserRegistration(CreateView):
+#     model = User
+#     template_name = 'registration/registration_form.html'
+#     f

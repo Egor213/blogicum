@@ -119,3 +119,29 @@ class Location(BaseModel):
 
     def __str__(self):
         return self.name
+
+class Comment(models.Model):
+    post = models.ForeignKey(
+        Post,
+        verbose_name='Пост',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=False,
+        related_name='comments'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False,
+        verbose_name='Автор публикации',
+        related_name='comments'
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('created',)
+
+    def __str__(self):
+        return self.text[:50]

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path, reverse_lazy
 from django.views.generic import CreateView
-from django.contrib.auth.forms import UserCreationForm
+from blog.form import CustomUserCreationForm
 from django.conf import settings
 from core.views import PageNotFound, IntervalServerErr
 
@@ -15,7 +15,7 @@ urlpatterns = [
         'auth/registration/',
         CreateView.as_view(
             template_name='registration/registration_form.html',
-            form_class=UserCreationForm,
+            form_class=CustomUserCreationForm,
             success_url=reverse_lazy('blog:index')
         ),
         name='registration'
