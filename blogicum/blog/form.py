@@ -1,4 +1,4 @@
-from django.forms import ModelForm
+from django.forms import ModelForm, DateInput
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import Post, Comment
@@ -16,8 +16,9 @@ class PostForm(ModelForm):
         model = Post
         fields = '__all__'
         exclude = ('author',)
-
-
+        widgets = {
+            'pub_date': DateInput(attrs={'type': 'date'})
+        }
 class CommentForm(ModelForm):
 
     class Meta:

@@ -20,23 +20,31 @@ def get_published_posts():
         & Q(pub_date__lte=current_time)
     ).select_related('author', 'location', 'category')
     return posts
+
+
     
 class UserProfile(ListView):
     model = Post
     template_name = 'blog/profile.html'
     paginate_by = settings.PAGINATOR_PROFILE
 
+    @property
     def get_user(self):
         return get_object_or_404(User, username=self.kwargs['username'])
     
     def get_queryset(self):
+        current_user = self.get_user
+        if self.request.user == current_user:
+            return Post.objects.filter(
+                author=current_user
+            ).select_related('author', 'location', 'category')
         return get_published_posts().filter(
-            author=self.get_user()
+            author=current_user
         )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = self.get_user()
+        context['profile'] = self.get_user
         return context
         
 
@@ -44,6 +52,10 @@ class PostCreate(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
     
     def get_success_url(self):
         return reverse_lazy(
@@ -83,8 +95,12 @@ class PostBase(LoginRequiredMixin):
 class PostEdit(PostBase, UpdateView):
     form_class = PostForm
 
+    def get_object(self, queryset=None):
+        return get_object_or_404(Post, author=self.request.user, pk=self.kwargs['post_id'])
+
 class PostDelete(PostBase, DeleteView):
-    pass
+    def get_object(self, queryset=None):
+        return get_object_or_404(Post, author=self.request.user, pk=self.kwargs['post_id'])
 
 
 
