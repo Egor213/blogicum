@@ -3,11 +3,10 @@ from django.http import HttpRequest, HttpResponse, Http404
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserChangeForm
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .form import PostForm, CommentForm
+from .form import PostForm, CommentForm, CustomUserChangeForm
 from .models import Post, Category, Comment
 
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
@@ -52,9 +51,9 @@ class PostCreate(LoginRequiredMixin, CreateView):
             kwargs={'username': self.request.user.username}
         )
 
-class EditProfile(LoginRequiredMixin, UpdateView):
+class ProfileEdit(LoginRequiredMixin, UpdateView):
     model = User
-    form_class = UserChangeForm
+    form_class = CustomUserChangeForm
     template_name = 'blog/user.html'
 
     def get_object(self, queryset=None):
@@ -131,9 +130,3 @@ def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
         'post': post
     }
     return render(request, template_name, context)
-
-
-# class UserRegistration(CreateView):
-#     model = User
-#     template_name = 'registration/registration_form.html'
-#     f

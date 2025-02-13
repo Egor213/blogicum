@@ -13,6 +13,6 @@ urlpatterns = [
     # path('posts/<int:post_id>/comment/', views.CommentCreate.as_view(), name='add_comment'),
     path('category/<slug:category_slug>/',
          views.CategoryList.as_view(), name='category_posts'),
-    path('profile/edit/', views.EditProfile.as_view(), name='edit_profile'),
+    path('profile/edit/', views.ProfileEdit.as_view(), name='edit_profile'),
     path('profile/<str:username>', views.UserProfile.as_view(), name='profile'),
 ]
