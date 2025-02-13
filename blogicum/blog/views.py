@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from .form import PostForm, CommentForm, CustomUserChangeForm
 from .models import Post, Category, Comment
@@ -146,13 +147,81 @@ class CategoryList(ListView):
 def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
     template_name = 'blog/detail.html'
     post = get_object_or_404(Post, pk=post_id)
+    comment_form = CommentForm(request.POST)
     current_time = timezone.now()
     if post.author != request.user:
         if not post.is_published or not post.category.is_published:
             raise Http404('Публикация недоступна!')
-        if post.pub_date > current_time:
+        elif post.pub_date > current_time:
             raise Http404('Данная запись еще не опубликована!')
+    comments = post.comments.all()
     context = {
-        'post': post
+        'post': post,
+        'comments': comments,
+        'form': comment_form
     }
     return render(request, template_name, context)
+    
+
+@login_required
+def comment_create(request, post_id):
+    post = get_object_or_404(Post, pk=post_id)
+    form = CommentForm(request.POST)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+        post.save()
+    return redirect('blog:post_detail', post_id=post_id)
+
+
+class CommentUpdate(UpdateView):
+    model = Comment
+    template_name = 'blog/comment.html'
+    form_class = CommentForm
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Comment, pk=self.kwargs['comment_id']
+        )
+    
+    def dispatch(self, request, *args, **kwargs):
+        post = self.get_object()
+        if request.user != post.author:
+            return redirect(
+                'blog:post_detail',
+                post_id=kwargs['post_id']
+            )
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={'post_id': self.kwargs['post_id']}
+        )
+
+
+class CommentDelete(DeleteView):
+    model = Comment
+    template_name = 'blog/comment.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Comment, pk=self.kwargs['comment_id']
+        )
+    
+    def dispatch(self, request, *args, **kwargs):
+        post = self.get_object()
+        if request.user != post.author:
+            return redirect(
+                'blog:post_detail',
+                post_id=kwargs['post_id']
+            )
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={'post_id': self.kwargs['post_id']}
+        )

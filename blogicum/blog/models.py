@@ -74,6 +74,7 @@ class Post(PostBaseModel):
         upload_to='post_imgages',
         blank=True
     )
+    comment_count = models.PositiveIntegerField(default=0)
 
 
     class Meta:
@@ -141,6 +142,11 @@ class Comment(PostBaseModel):
         related_name='comments'
     )
     is_published = None
+
+    def save(self, **kwargs):
+        super().save(**kwargs)
+        self.post.comment_count = Comment.objects.filter(
+            post=self.post).count()
 
     class Meta:
         ordering = ('created_at',)
