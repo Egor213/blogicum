@@ -82,11 +82,10 @@ class PostBase(LoginRequiredMixin):
     model = Post
     template_name = 'blog/create.html'
 
-    # def get_success_url(self):
-    #     comment = self.get_object()
-    #     return reverse(
-    #         'news:detail', kwargs={'pk': comment.news.pk}
-    #     ) + '#comments'
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:index'
+        )
 
     def get_queryset(self):
         """Пользователь может работать только со своими комментариями."""

@@ -3,6 +3,7 @@ from django.urls import include, path, reverse_lazy
 from django.views.generic import CreateView
 from blog.form import CustomUserCreationForm
 from django.conf import settings
+from django.conf.urls.static import static
 from core.views import PageNotFound, IntervalServerErr
 
 handler404 = PageNotFound.as_view()
@@ -22,7 +23,7 @@ urlpatterns = [
     ),
     path('pages/', include('pages.urls', namespace='pages')),
     path('admin/', admin.site.urls),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
 
 if settings.DEBUG:
     import debug_toolbar
