@@ -8,7 +8,7 @@ User = get_user_model()
 
 class UserFormMixin():
     model = User
-    fields = ('first_name', 'last_name', 'email', )
+    fields = ('username', 'first_name', 'last_name', 'email', )
 
 class PostForm(ModelForm):
 
