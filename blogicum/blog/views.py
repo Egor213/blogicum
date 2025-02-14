@@ -59,7 +59,7 @@ class ProfileEdit(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy(
             'blog:profile',
-            kwargs={'username': self.request.user.username}
+            kwargs={'slug': self.request.user.username}
         )
     
 
@@ -72,15 +72,15 @@ class PostBaseMixin(PostLoginModelMixin):
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
-            kwargs={'post_id': self.object.pk}
+            kwargs={'pk': self.object.pk}
         )
     
     def dispatch(self, request, *args, **kwargs):
-        post = self.get_object()
+        post = get_object_or_404(Post, pk=self.kwargs['pk'])
         if request.user != post.author:
             return redirect(
                 'blog:post_detail',
-                post_id=kwargs['post_id']
+                pk=kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
 
@@ -88,7 +88,7 @@ class PostBaseMixin(PostLoginModelMixin):
         return self.model.objects.filter(author=self.request.user)
     
     def get_object(self, queryset=None):
-        return get_object_or_404(Post, pk=self.kwargs['post_id'])
+        return get_object_or_404(Post, pk=self.kwargs['pk'])
 
 
 class PostEdit(PostBaseMixin, UpdateView):
@@ -110,8 +110,8 @@ class PostCreate(PostLoginModelMixin, CreateView):
     
     def get_success_url(self):
         return reverse_lazy(
-            'blog:post_detail',
-            kwargs={'post_id': self.object.pk}
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
         )
 
 
@@ -144,9 +144,9 @@ class CategoryList(ListView):
         return context
 
 
-def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
+def post_detail(request: HttpRequest, pk: int) -> HttpResponse:
     template_name = 'blog/detail.html'
-    post = get_object_or_404(Post, pk=post_id)
+    post = get_object_or_404(Post, pk=pk)
     comment_form = CommentForm(request.POST)
     current_time = timezone.now()
     if post.author != request.user:
@@ -164,8 +164,8 @@ def post_detail(request: HttpRequest, post_id: int) -> HttpResponse:
     
 
 @login_required
-def comment_create(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
+def comment_create(request, pk):
+    post = get_object_or_404(Post, pk=pk)
     form = CommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
@@ -173,7 +173,7 @@ def comment_create(request, post_id):
         comment.post = post
         comment.save()
         post.save()
-    return redirect('blog:post_detail', post_id=post_id)
+    return redirect('blog:post_detail', pk=pk)
 
 
 class CommentUpdate(UpdateView):
@@ -191,14 +191,14 @@ class CommentUpdate(UpdateView):
         if request.user != post.author:
             return redirect(
                 'blog:post_detail',
-                post_id=kwargs['post_id']
+                pk=kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
-            kwargs={'post_id': self.kwargs['post_id']}
+            kwargs={'pk': self.kwargs['pk']}
         )
 
 
@@ -216,12 +216,12 @@ class CommentDelete(DeleteView):
         if request.user != post.author:
             return redirect(
                 'blog:post_detail',
-                post_id=kwargs['post_id']
+                pk=kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
-            kwargs={'post_id': self.kwargs['post_id']}
+            kwargs={'pk': self.kwargs['pk']}
         )
