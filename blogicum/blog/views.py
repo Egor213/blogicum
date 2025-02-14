@@ -100,6 +100,7 @@ class PostDelete(PostBaseMixin, DeleteView):
         return reverse_lazy(
             'blog:index'
         )
+
     
 class PostCreate(PostLoginModelMixin, CreateView):
     form_class = PostForm
@@ -113,6 +114,7 @@ class PostCreate(PostLoginModelMixin, CreateView):
             'blog:profile',
             kwargs={'username': self.request.user.username}
         )
+
 
 
 class PostList(ListView):

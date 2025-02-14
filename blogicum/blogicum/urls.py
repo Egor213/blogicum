@@ -4,10 +4,9 @@ from django.views.generic import CreateView
 from blog.form import CustomUserCreationForm
 from django.conf import settings
 from django.conf.urls.static import static
-from core.views import PageNotFound, IntervalServerErr
 
-handler404 = PageNotFound.as_view()
-handler403 = IntervalServerErr.as_view()
+handler404 = 'pages.views.page_not_found'
+handler500 = 'pages.views.internal_server_err'
 
 urlpatterns = [
     path('', include('blog.urls', namespace='blog')),
@@ -24,8 +23,3 @@ urlpatterns = [
     path('pages/', include('pages.urls', namespace='pages')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
-
-if settings.DEBUG:
-    import debug_toolbar
-    # Добавить к списку urlpatterns список адресов из приложения debug_toolbar:
-    urlpatterns += (path('__debug__/', include(debug_toolbar.urls)),) 
