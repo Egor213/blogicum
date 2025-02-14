@@ -7,10 +7,9 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
+from django.views import generic
 from .form import PostForm, CommentForm, CustomUserChangeForm
 from .models import Post, Category, Comment
-
-from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 
 
 def get_published_posts(object):
@@ -22,7 +21,7 @@ def get_published_posts(object):
 
 
     
-class UserProfile(ListView):
+class UserProfileView(generic.ListView):
     model = Post
     template_name = 'blog/profile.html'
     paginate_by = settings.PAGINATOR_PROFILE
@@ -48,7 +47,7 @@ class UserProfile(ListView):
         return context
         
 
-class ProfileEdit(LoginRequiredMixin, UpdateView):
+class ProfileEditView(LoginRequiredMixin, generic.UpdateView):
     model = User
     form_class = CustomUserChangeForm
     template_name = 'blog/user.html'
@@ -91,18 +90,20 @@ class PostBaseMixin(PostLoginModelMixin):
         return get_object_or_404(Post, pk=self.kwargs['pk'])
 
 
-class PostEdit(PostBaseMixin, UpdateView):
+class PostEditView(PostBaseMixin, generic.UpdateView):
     form_class = PostForm
 
 
-class PostDelete(PostBaseMixin, DeleteView):
+class PostDeleteView(PostBaseMixin, generic.DeleteView):
     def get_success_url(self):
         return reverse_lazy(
             'blog:index'
         )
+    
+
 
     
-class PostCreate(PostLoginModelMixin, CreateView):
+class PostCreateView(PostLoginModelMixin, generic.CreateView):
     form_class = PostForm
 
     def form_valid(self, form):
@@ -117,7 +118,7 @@ class PostCreate(PostLoginModelMixin, CreateView):
 
 
 
-class PostList(ListView):
+class PostListView(generic.ListView):
     model = Post
     template_name = 'blog/index.html'
     paginate_by = settings.PAGINATOR_MAIN_PAGE
@@ -126,7 +127,7 @@ class PostList(ListView):
     )
 
 
-class CategoryList(ListView):
+class CategoryListView(generic.ListView):
     model = Category
     template_name = 'blog/category.html'
     paginate_by = settings.PAGINATOR_CATEGORY_PAGE
@@ -146,7 +147,7 @@ class CategoryList(ListView):
         return context
 
 
-def post_detail(request: HttpRequest, pk: int) -> HttpResponse:
+def post_detail(request, pk):
     template_name = 'blog/detail.html'
     post = get_object_or_404(Post, pk=pk)
     comment_form = CommentForm(request.POST)
@@ -178,7 +179,7 @@ def comment_create(request, pk):
     return redirect('blog:post_detail', pk=pk)
 
 
-class CommentUpdate(UpdateView):
+class CommentUpdateView(generic.UpdateView):
     model = Comment
     template_name = 'blog/comment.html'
     form_class = CommentForm
@@ -193,7 +194,7 @@ class CommentUpdate(UpdateView):
         if request.user != post.author:
             return redirect(
                 'blog:post_detail',
-                pk=kwargs['pk']
+                pk=self.kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
     
@@ -204,7 +205,7 @@ class CommentUpdate(UpdateView):
         )
 
 
-class CommentDelete(DeleteView):
+class CommentDeleteView(generic.DeleteView):
     model = Comment
     template_name = 'blog/comment.html'
 
