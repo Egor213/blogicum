@@ -76,7 +76,6 @@ class Post(PostBaseModel):
     )
     comment_count = models.PositiveIntegerField(default=0)
 
-
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'

@@ -20,6 +20,5 @@ def internal_server_err(request):
 
 
 def csrf_failure(request, reason=''):
-    """Кастомная страница для отображения ошибки 403 CSRF."""
     template_name = 'pages/403csrf.html'
     return render(request, template_name, status=403)

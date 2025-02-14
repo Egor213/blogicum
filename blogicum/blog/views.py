@@ -59,7 +59,7 @@ class ProfileEdit(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy(
             'blog:profile',
-            kwargs={'slug': self.request.user.username}
+            kwargs={'username': self.request.user.username}
         )
     
 
