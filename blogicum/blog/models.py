@@ -73,7 +73,7 @@ class Post(PostBaseModel):
     )
     image = models.ImageField(
         verbose_name='Фото',
-        upload_to='post_imgages',
+        upload_to='post_images',
         blank=True
     )
     comment_count = models.PositiveIntegerField(default=0)
