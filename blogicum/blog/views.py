@@ -112,11 +112,7 @@ class PostEditView(PostBaseMixin, generic.UpdateView):
     pass
 
 
-class PostDeleteView(
-    PostModelMixin,
-    DispatchSuccessGetPostMixin,
-    generic.DeleteView,
-):
+class PostDeleteView(PostBaseMixin, generic.DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:index')
 
