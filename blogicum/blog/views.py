@@ -39,8 +39,32 @@ class DispatchSuccessGetPostMixin:
                 pk=kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
-
     
+
+class PostModelMixin(LoginRequiredMixin):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
+
+
+class PostBaseMixin(DispatchSuccessGetPostMixin, PostModelMixin):
+    def get_queryset(self):
+        return self.model.objects.filter(author=self.request.user)
+    
+    def get_object(self, queryset=None):
+        return get_object_or_404(Post, pk=self.kwargs['pk'])
+
+
+class CommentBaseMixin(DispatchSuccessGetPostMixin):
+    model = Comment
+    template_name = 'blog/comment.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Comment, pk=self.kwargs['comment_id']
+        )
+
+
 class UserProfileView(generic.ListView):
     model = Post
     template_name = 'blog/profile.html'
@@ -82,20 +106,6 @@ class ProfileEditView(
             'blog:profile',
             kwargs={'username': self.request.user.username}
         )
-
-
-class PostModelMixin(LoginRequiredMixin):
-    model = Post
-    form_class = PostForm
-    template_name = 'blog/create.html'
-
-
-class PostBaseMixin(DispatchSuccessGetPostMixin, PostModelMixin):
-    def get_queryset(self):
-        return self.model.objects.filter(author=self.request.user)
-    
-    def get_object(self, queryset=None):
-        return get_object_or_404(Post, pk=self.kwargs['pk'])
 
 
 class PostEditView(PostBaseMixin, generic.UpdateView):
@@ -147,16 +157,6 @@ def post_detail(request, pk):
         'form': comment_form
     }
     return render(request, template_name, context)
-
-
-class CommentBaseMixin(DispatchSuccessGetPostMixin):
-    model = Comment
-    template_name = 'blog/comment.html'
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            Comment, pk=self.kwargs['comment_id']
-        )
 
 
 class CommentUpdateView(CommentBaseMixin, generic.UpdateView):
