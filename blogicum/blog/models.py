@@ -23,6 +23,7 @@ class PublishedBaseModel(models.Model):
     class Meta:
         abstract = True
 
+
 class PostBaseModel(PublishedBaseModel):
     author = models.ForeignKey(
         User,
@@ -36,6 +37,7 @@ class PostBaseModel(PublishedBaseModel):
 
     class Meta:
         abstract = True
+
 
 class Post(PostBaseModel):
     title = models.CharField(
@@ -83,7 +85,7 @@ class Post(PostBaseModel):
 
     def __str__(self):
         return f'{self.title}, {self.author}'
-    
+
 
 class Category(PublishedBaseModel):
     title = models.CharField(
@@ -130,6 +132,7 @@ class Location(PublishedBaseModel):
 
     def __str__(self):
         return self.name
+
 
 class Comment(PostBaseModel):
     post = models.ForeignKey(

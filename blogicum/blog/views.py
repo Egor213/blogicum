@@ -22,7 +22,7 @@ def get_published_posts(object):
             & Q(pub_date__lte=current_time)
             & Q(category__is_published=True)
         ).select_related('author', 'location', 'category')
-    
+
 
 class DispatchSuccessGetPostMixin:
     def get_success_url(self):
@@ -30,7 +30,7 @@ class DispatchSuccessGetPostMixin:
             'blog:post_detail',
             kwargs={'pk': self.kwargs['pk']}
         )
-    
+
     def dispatch(self, request, *args, **kwargs):
         post = self.get_object()
         if request.user != post.author:
@@ -39,7 +39,7 @@ class DispatchSuccessGetPostMixin:
                 pk=kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
-    
+
 
 class PostModelMixin(LoginRequiredMixin):
     model = Post
@@ -50,7 +50,7 @@ class PostModelMixin(LoginRequiredMixin):
 class PostBaseMixin(DispatchSuccessGetPostMixin, PostModelMixin):
     def get_queryset(self):
         return self.model.objects.filter(author=self.request.user)
-    
+
     def get_object(self, queryset=None):
         return get_object_or_404(Post, pk=self.kwargs['pk'])
 
@@ -73,7 +73,7 @@ class UserProfileView(generic.ListView):
     @property
     def get_user(self):
         return get_object_or_404(User, username=self.kwargs['username'])
-    
+
     def get_queryset(self):
         current_user = self.get_user
         if self.request.user == current_user:
@@ -83,12 +83,12 @@ class UserProfileView(generic.ListView):
         return get_published_posts(Post.objects).filter(
             author=current_user
         )
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['profile'] = self.get_user
         return context
-        
+
 
 class ProfileEditView(
     LoginRequiredMixin,
@@ -100,7 +100,7 @@ class ProfileEditView(
 
     def get_object(self, queryset=None):
         return self.request.user
-    
+
     def get_success_url(self):
         return reverse_lazy(
             'blog:profile',
@@ -116,12 +116,12 @@ class PostDeleteView(PostBaseMixin, generic.DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:index')
 
-    
+
 class PostCreateView(PostModelMixin, generic.CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse_lazy(
             'blog:profile',
@@ -161,7 +161,7 @@ class CommentUpdateView(CommentBaseMixin, generic.UpdateView):
 
 class CommentDeleteView(CommentBaseMixin, generic.DeleteView):
     pass
-    
+
 
 @login_required
 def comment_create(request, pk):
@@ -183,13 +183,13 @@ class CategoryListView(generic.ListView):
 
     def get_category(self):
         return get_object_or_404(Category, slug=self.kwargs['category_slug'])
-    
+
     def get_queryset(self):
         category = self.get_category()
         if not category.is_published:
             raise Http404('Категория не публикуется!')
         return get_published_posts(category.posts)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['category'] = self.get_category()

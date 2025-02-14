@@ -10,6 +10,7 @@ class UserFormMixin():
     model = User
     fields = ('username', 'first_name', 'last_name', 'email', )
 
+
 class PostForm(ModelForm):
 
     class Meta:
@@ -19,6 +20,8 @@ class PostForm(ModelForm):
         widgets = {
             'pub_date': DateInput(attrs={'type': 'date'})
         }
+
+
 class CommentForm(ModelForm):
 
     class Meta:
