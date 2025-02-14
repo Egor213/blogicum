@@ -135,7 +135,7 @@ class Comment(PostBaseModel):
     post = models.ForeignKey(
         Post,
         verbose_name='Пост',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=False,
         related_name='comments'

@@ -22,14 +22,23 @@ def get_published_posts(object):
             & Q(pub_date__lte=current_time)
             & Q(category__is_published=True)
         ).select_related('author', 'location', 'category')
+    
 
-
-class SuccessGetProfileMixin:
+class DispatchSuccessGetPostMixin:
     def get_success_url(self):
         return reverse_lazy(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
+            'blog:post_detail',
+            kwargs={'pk': self.kwargs['pk']}
         )
+    
+    def dispatch(self, request, *args, **kwargs):
+        post = self.get_object()
+        if request.user != post.author:
+            return redirect(
+                'blog:post_detail',
+                pk=kwargs['pk']
+            )
+        return super().dispatch(request, *args, **kwargs)
 
     
 class UserProfileView(generic.ListView):
@@ -59,7 +68,6 @@ class UserProfileView(generic.ListView):
 
 class ProfileEditView(
     LoginRequiredMixin,
-    SuccessGetProfileMixin,
     generic.UpdateView
 ):
     model = User
@@ -69,28 +77,20 @@ class ProfileEditView(
     def get_object(self, queryset=None):
         return self.request.user
     
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
-class PostLoginModelMixin(LoginRequiredMixin):
+
+class PostModelMixin(LoginRequiredMixin):
     model = Post
+    form_class = PostForm
     template_name = 'blog/create.html'
 
 
-class PostBaseMixin(PostLoginModelMixin):
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:post_detail',
-            kwargs={'pk': self.kwargs['pk']}
-        )
-    
-    def dispatch(self, request, *args, **kwargs):
-        post = self.get_object()
-        if request.user != post.author:
-            return redirect(
-                'blog:post_detail',
-                pk=kwargs['pk']
-            )
-        return super().dispatch(request, *args, **kwargs)
-
+class PostBaseMixin(DispatchSuccessGetPostMixin, PostModelMixin):
     def get_queryset(self):
         return self.model.objects.filter(author=self.request.user)
     
@@ -99,26 +99,28 @@ class PostBaseMixin(PostLoginModelMixin):
 
 
 class PostEditView(PostBaseMixin, generic.UpdateView):
-    form_class = PostForm
+    pass
 
 
-class PostDeleteView(PostBaseMixin, generic.DeleteView):
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:index'
-        )
-    
-    
-class PostCreateView(
-    SuccessGetProfileMixin,
-    PostLoginModelMixin,
-    generic.CreateView
+class PostDeleteView(
+    PostModelMixin,
+    DispatchSuccessGetPostMixin,
+    generic.DeleteView,
 ):
-    form_class = PostForm
+    def get_success_url(self):
+        return reverse_lazy('blog:index')
 
+    
+class PostCreateView(PostModelMixin, generic.CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
 
 class PostListView(generic.ListView):
@@ -147,28 +149,13 @@ def post_detail(request, pk):
     return render(request, template_name, context)
 
 
-class CommentBaseMixin:
+class CommentBaseMixin(DispatchSuccessGetPostMixin):
     model = Comment
     template_name = 'blog/comment.html'
 
     def get_object(self, queryset=None):
         return get_object_or_404(
             Comment, pk=self.kwargs['comment_id']
-        )
-    
-    def dispatch(self, request, *args, **kwargs):
-        post = self.get_object()
-        if request.user != post.author:
-            return redirect(
-                'blog:post_detail',
-                pk=self.kwargs['pk']
-            )
-        return super().dispatch(request, *args, **kwargs)
-    
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:post_detail',
-            kwargs={'pk': self.kwargs['pk']}
         )
 
 
@@ -179,7 +166,7 @@ class CommentUpdateView(CommentBaseMixin, generic.UpdateView):
 class CommentDeleteView(CommentBaseMixin, generic.DeleteView):
     pass
     
-    
+
 @login_required
 def comment_create(request, pk):
     post = get_object_or_404(Post, pk=pk)
