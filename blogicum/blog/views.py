@@ -23,8 +23,19 @@ def get_published_posts(object):
             & Q(category__is_published=True)
         ).select_related('author', 'location', 'category')
 
+class PostModelMixin(LoginRequiredMixin):
+    model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
 
-class DispatchSuccessGetPostMixin:
+    def get_queryset(self):
+        return self.model.objects.filter(author=self.request.user)
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Post, pk=self.kwargs['pk'])
+
+
+class DispatchPostMixin(PostModelMixin):
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
@@ -41,21 +52,8 @@ class DispatchSuccessGetPostMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
-class PostModelMixin(LoginRequiredMixin):
-    model = Post
-    form_class = PostForm
-    template_name = 'blog/create.html'
 
-
-class PostBaseMixin(DispatchSuccessGetPostMixin, PostModelMixin):
-    def get_queryset(self):
-        return self.model.objects.filter(author=self.request.user)
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(Post, pk=self.kwargs['pk'])
-
-
-class CommentBaseMixin(DispatchSuccessGetPostMixin):
+class CommentBaseMixin(DispatchPostMixin):
     model = Comment
     template_name = 'blog/comment.html'
 
@@ -108,11 +106,11 @@ class ProfileEditView(
         )
 
 
-class PostEditView(PostBaseMixin, generic.UpdateView):
+class PostEditView(DispatchPostMixin, generic.UpdateView):
     pass
 
 
-class PostDeleteView(PostBaseMixin, generic.DeleteView):
+class PostDeleteView(DispatchPostMixin, generic.DeleteView):
     def get_success_url(self):
         return reverse_lazy('blog:index')
 
