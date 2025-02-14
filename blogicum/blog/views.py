@@ -18,10 +18,11 @@ User = get_user_model()
 def get_published_posts(object):
     current_time = timezone.now()
     return object.filter(
-            Q(is_published=True)
-            & Q(pub_date__lte=current_time)
-            & Q(category__is_published=True)
-        ).select_related('author', 'location', 'category')
+        Q(is_published=True)
+        & Q(pub_date__lte=current_time)
+        & Q(category__is_published=True)
+    ).select_related('author', 'location', 'category')
+
 
 class PostModelMixin(LoginRequiredMixin):
     model = Post
@@ -50,7 +51,6 @@ class DispatchPostMixin(PostModelMixin):
                 pk=kwargs['pk']
             )
         return super().dispatch(request, *args, **kwargs)
-
 
 
 class CommentBaseMixin(DispatchPostMixin):
