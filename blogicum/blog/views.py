@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.http import Http404
 from django.views import generic
 from django.conf import settings
@@ -33,19 +34,19 @@ class PostModelMixin(LoginRequiredMixin):
         return self.model.objects.filter(author=self.request.user)
 
     def get_object(self, queryset=None):
-        return get_object_or_404(Post, pk=self.kwargs["pk"])
+        return get_object_or_404(Post, pk=self.kwargs["post_id"])
 
 
 class DispatchPostMixin(PostModelMixin):
     def get_success_url(self):
         return reverse_lazy(
-            "blog:post_detail", kwargs={"post_id": self.kwargs["pk"]}
+            "blog:post_detail", kwargs={"post_id": self.kwargs["post_id"]}
         )
 
     def dispatch(self, request, *args, **kwargs):
         post = self.get_object()
         if request.user != post.author:
-            return redirect("blog:post_detail", post_id=kwargs["pk"])
+            return redirect("blog:post_detail", post_id=kwargs["post_id"])
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -145,8 +146,8 @@ class CommentDeleteView(CommentBaseMixin, generic.DeleteView):
 
 
 @login_required
-def comment_create(request, pk):
-    post = get_object_or_404(Post, pk=pk)
+def comment_create(request, post_id):
+    post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
@@ -154,7 +155,7 @@ def comment_create(request, pk):
         comment.post = post
         comment.save()
         post.save()
-    return redirect("blog:post_detail", post_id=pk)
+    return redirect("blog:post_detail", post_id=post_id)
 
 
 class CategoryListView(generic.ListView):

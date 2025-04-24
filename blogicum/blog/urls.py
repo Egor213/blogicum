@@ -21,22 +21,28 @@ urlpatterns = [
     ),
     path("posts/create/", views.PostCreateView.as_view(), name="create_post"),
     path("posts/<int:post_id>/", views.post_detail, name="post_detail"),
-    path("posts/<int:pk>/comment/", views.comment_create, name="add_comment"),
     path(
-        "posts/<int:pk>/edit/", views.PostEditView.as_view(), name="edit_post"
+        "posts/<int:post_id>/comment/",
+        views.comment_create,
+        name="add_comment",
     ),
     path(
-        "posts/<int:pk>/delete/",
+        "posts/<int:post_id>/edit/",
+        views.PostEditView.as_view(),
+        name="edit_post",
+    ),
+    path(
+        "posts/<int:post_id>/delete/",
         views.PostDeleteView.as_view(),
         name="delete_post",
     ),
     path(
-        "posts/<int:pk>/edit_comment/<int:comment_id>/",
+        "posts/<int:post_id>/edit_comment/<int:comment_id>/",
         views.CommentUpdateView.as_view(),
         name="edit_comment",
     ),
     path(
-        "posts/<int:pk>/delete_comment/<int:comment_id>/",
+        "posts/<int:post_id>/delete_comment/<int:comment_id>/",
         views.CommentDeleteView.as_view(),
         name="delete_comment",
     ),
