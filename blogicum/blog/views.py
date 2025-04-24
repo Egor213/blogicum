@@ -39,13 +39,13 @@ class PostModelMixin(LoginRequiredMixin):
 class DispatchPostMixin(PostModelMixin):
     def get_success_url(self):
         return reverse_lazy(
-            "blog:post_detail", kwargs={"pk": self.kwargs["pk"]}
+            "blog:post_detail", kwargs={"post_id": self.kwargs["pk"]}
         )
 
     def dispatch(self, request, *args, **kwargs):
         post = self.get_object()
         if request.user != post.author:
-            return redirect("blog:post_detail", pk=kwargs["pk"])
+            return redirect("blog:post_detail", post_id=kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -121,9 +121,9 @@ class PostListView(generic.ListView):
     queryset = get_published_posts(Post.objects)
 
 
-def post_detail(request, pk):
+def post_detail(request, post_id):
     template_name = "blog/detail.html"
-    post = get_object_or_404(Post, pk=pk)
+    post = get_object_or_404(Post, pk=post_id)
     comment_form = CommentForm(request.POST)
     current_time = timezone.now()
     if post.author != request.user:
@@ -154,7 +154,7 @@ def comment_create(request, pk):
         comment.post = post
         comment.save()
         post.save()
-    return redirect("blog:post_detail", pk=pk)
+    return redirect("blog:post_detail", post_id=pk)
 
 
 class CategoryListView(generic.ListView):

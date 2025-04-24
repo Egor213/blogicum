@@ -20,7 +20,7 @@ urlpatterns = [
         name="category_posts",
     ),
     path("posts/create/", views.PostCreateView.as_view(), name="create_post"),
-    path("posts/<int:pk>/", views.post_detail, name="post_detail"),
+    path("posts/<int:post_id>/", views.post_detail, name="post_detail"),
     path("posts/<int:pk>/comment/", views.comment_create, name="add_comment"),
     path(
         "posts/<int:pk>/edit/", views.PostEditView.as_view(), name="edit_post"
