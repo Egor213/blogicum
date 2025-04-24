@@ -17,12 +17,20 @@ class UserFormMixin:
 
 
 class PostForm(ModelForm):
-
     class Meta:
         model = Post
-        fields = "__all__"
-        exclude = ("author", "comment_count")
-        widgets = {"pub_date": DateInput(attrs={"type": "date"})}
+        fields = (
+            "title",
+            "text",
+            "location",
+            "category",
+            "image",
+            "is_published",
+            "pub_date",
+        )
+        widgets = {
+            "pub_date": DateInput(attrs={"type": "datetime-local"}),
+        }
 
 
 class CommentForm(ModelForm):
