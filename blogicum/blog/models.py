@@ -136,6 +136,8 @@ class Comment(PostBaseModel):
         ).count()
 
     class Meta:
+        verbose_name = "комментарий"
+        verbose_name_plural = "Комментарии"
         ordering = ("created_at",)
 
     def __str__(self):
