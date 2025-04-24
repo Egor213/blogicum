@@ -7,13 +7,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('blog', '0007_post_comment_count'),
+        ("blog", "0007_post_comment_count"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='comment',
-            name='post',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='blog.post', verbose_name='Пост'),
+            model_name="comment",
+            name="post",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="comments",
+                to="blog.post",
+                verbose_name="Пост",
+            ),
         ),
     ]

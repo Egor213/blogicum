@@ -21,88 +21,76 @@ def get_published_posts(object):
         Q(is_published=True)
         & Q(pub_date__lte=current_time)
         & Q(category__is_published=True)
-    ).select_related('author', 'location', 'category')
+    ).select_related("author", "location", "category")
 
 
 class PostModelMixin(LoginRequiredMixin):
     model = Post
     form_class = PostForm
-    template_name = 'blog/create.html'
+    template_name = "blog/create.html"
 
     def get_queryset(self):
         return self.model.objects.filter(author=self.request.user)
 
     def get_object(self, queryset=None):
-        return get_object_or_404(Post, pk=self.kwargs['pk'])
+        return get_object_or_404(Post, pk=self.kwargs["pk"])
 
 
 class DispatchPostMixin(PostModelMixin):
     def get_success_url(self):
         return reverse_lazy(
-            'blog:post_detail',
-            kwargs={'pk': self.kwargs['pk']}
+            "blog:post_detail", kwargs={"pk": self.kwargs["pk"]}
         )
 
     def dispatch(self, request, *args, **kwargs):
         post = self.get_object()
         if request.user != post.author:
-            return redirect(
-                'blog:post_detail',
-                pk=kwargs['pk']
-            )
+            return redirect("blog:post_detail", pk=kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
 
 class CommentBaseMixin(DispatchPostMixin):
     model = Comment
-    template_name = 'blog/comment.html'
+    template_name = "blog/comment.html"
 
     def get_object(self, queryset=None):
-        return get_object_or_404(
-            Comment, pk=self.kwargs['comment_id']
-        )
+        return get_object_or_404(Comment, pk=self.kwargs["comment_id"])
 
 
 class UserProfileView(generic.ListView):
     model = Post
-    template_name = 'blog/profile.html'
+    template_name = "blog/profile.html"
     paginate_by = settings.PAGINATOR_PROFILE
 
     @property
     def get_user(self):
-        return get_object_or_404(User, username=self.kwargs['username'])
+        return get_object_or_404(User, username=self.kwargs["username"])
 
     def get_queryset(self):
         current_user = self.get_user
         if self.request.user == current_user:
-            return Post.objects.filter(
-                author=current_user
-            ).select_related('author', 'location', 'category')
-        return get_published_posts(Post.objects).filter(
-            author=current_user
-        )
+            return Post.objects.filter(author=current_user).select_related(
+                "author", "location", "category"
+            )
+        return get_published_posts(Post.objects).filter(author=current_user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = self.get_user
+        context["profile"] = self.get_user
         return context
 
 
-class ProfileEditView(
-    LoginRequiredMixin,
-    generic.UpdateView
-):
+class ProfileEditView(LoginRequiredMixin, generic.UpdateView):
     model = User
     form_class = CustomUserChangeForm
-    template_name = 'blog/user.html'
+    template_name = "blog/user.html"
 
     def get_object(self, queryset=None):
         return self.request.user
 
     def get_success_url(self):
         return reverse_lazy(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
+            "blog:profile", kwargs={"username": self.request.user.username}
         )
 
 
@@ -112,7 +100,7 @@ class PostEditView(DispatchPostMixin, generic.UpdateView):
 
 class PostDeleteView(DispatchPostMixin, generic.DeleteView):
     def get_success_url(self):
-        return reverse_lazy('blog:index')
+        return reverse_lazy("blog:index")
 
 
 class PostCreateView(PostModelMixin, generic.CreateView):
@@ -122,34 +110,29 @@ class PostCreateView(PostModelMixin, generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
+            "blog:profile", kwargs={"username": self.request.user.username}
         )
 
 
 class PostListView(generic.ListView):
     model = Post
-    template_name = 'blog/index.html'
+    template_name = "blog/index.html"
     paginate_by = settings.PAGINATOR_MAIN_PAGE
     queryset = get_published_posts(Post.objects)
 
 
 def post_detail(request, pk):
-    template_name = 'blog/detail.html'
+    template_name = "blog/detail.html"
     post = get_object_or_404(Post, pk=pk)
     comment_form = CommentForm(request.POST)
     current_time = timezone.now()
     if post.author != request.user:
         if not post.is_published or not post.category.is_published:
-            raise Http404('Публикация недоступна!')
+            raise Http404("Публикация недоступна!")
         elif post.pub_date > current_time:
-            raise Http404('Данная запись еще не опубликована!')
+            raise Http404("Данная запись еще не опубликована!")
     comments = post.comments.all()
-    context = {
-        'post': post,
-        'comments': comments,
-        'form': comment_form
-    }
+    context = {"post": post, "comments": comments, "form": comment_form}
     return render(request, template_name, context)
 
 
@@ -171,24 +154,24 @@ def comment_create(request, pk):
         comment.post = post
         comment.save()
         post.save()
-    return redirect('blog:post_detail', pk=pk)
+    return redirect("blog:post_detail", pk=pk)
 
 
 class CategoryListView(generic.ListView):
     model = Category
-    template_name = 'blog/category.html'
+    template_name = "blog/category.html"
     paginate_by = settings.PAGINATOR_CATEGORY_PAGE
 
     def get_category(self):
-        return get_object_or_404(Category, slug=self.kwargs['category_slug'])
+        return get_object_or_404(Category, slug=self.kwargs["category_slug"])
 
     def get_queryset(self):
         category = self.get_category()
         if not category.is_published:
-            raise Http404('Категория не публикуется!')
+            raise Http404("Категория не публикуется!")
         return get_published_posts(category.posts)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['category'] = self.get_category()
+        context["category"] = self.get_category()
         return context

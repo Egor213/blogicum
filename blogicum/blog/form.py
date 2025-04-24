@@ -6,27 +6,30 @@ from .models import Post, Comment
 User = get_user_model()
 
 
-class UserFormMixin():
+class UserFormMixin:
     model = User
-    fields = ('username', 'first_name', 'last_name', 'email', )
+    fields = (
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+    )
 
 
 class PostForm(ModelForm):
 
     class Meta:
         model = Post
-        fields = '__all__'
-        exclude = ('author', 'comment_count')
-        widgets = {
-            'pub_date': DateInput(attrs={'type': 'date'})
-        }
+        fields = "__all__"
+        exclude = ("author", "comment_count")
+        widgets = {"pub_date": DateInput(attrs={"type": "date"})}
 
 
 class CommentForm(ModelForm):
 
     class Meta:
         model = Comment
-        fields = ('text',)
+        fields = ("text",)
 
 
 class CustomUserCreationForm(UserCreationForm):
