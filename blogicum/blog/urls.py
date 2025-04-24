@@ -10,7 +10,7 @@ urlpatterns = [
         "profile/edit/", views.ProfileEditView.as_view(), name="edit_profile"
     ),
     path(
-        "profile/<slug:username>/",
+        "profile/<str:username>/",
         views.UserProfileView.as_view(),
         name="profile",
     ),
