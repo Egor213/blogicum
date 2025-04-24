@@ -68,12 +68,10 @@ class Post(PostBaseModel):
     image = models.ImageField(
         verbose_name="Фото", upload_to="post_images", blank=True
     )
-    comment_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name = "публикация"
         verbose_name_plural = "Публикации"
-        ordering = ("-pub_date",)
 
     def __str__(self):
         return f"{self.title}, {self.author}"
@@ -128,12 +126,6 @@ class Comment(PostBaseModel):
         related_name="comments",
     )
     is_published = None
-
-    def save(self, **kwargs):
-        super().save(**kwargs)
-        self.post.comment_count = Comment.objects.filter(
-            post=self.post
-        ).count()
 
     class Meta:
         verbose_name = "комментарий"

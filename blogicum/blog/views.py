@@ -1,4 +1,5 @@
 from pprint import pprint
+from django.db.models import Count
 from django.http import Http404
 from django.views import generic
 from django.conf import settings
@@ -16,13 +17,21 @@ from .models import Post, Category, Comment
 User = get_user_model()
 
 
+def get_annotated_posts(queryset):
+    return queryset.annotate(comment_count=Count("comments")).order_by(
+        "-pub_date"
+    )
+
+
 def get_published_posts(object):
     current_time = timezone.now()
-    return object.filter(
-        Q(is_published=True)
-        & Q(pub_date__lte=current_time)
-        & Q(category__is_published=True)
-    ).select_related("author", "location", "category")
+    return get_annotated_posts(
+        object.filter(
+            Q(is_published=True)
+            & Q(pub_date__lte=current_time)
+            & Q(category__is_published=True)
+        ).select_related("author", "location", "category")
+    )
 
 
 class PostModelMixin(LoginRequiredMixin):
@@ -70,8 +79,10 @@ class UserProfileView(generic.ListView):
     def get_queryset(self):
         current_user = self.get_user
         if self.request.user == current_user:
-            return Post.objects.filter(author=current_user).select_related(
-                "author", "location", "category"
+            return get_annotated_posts(
+                Post.objects.filter(author=current_user).select_related(
+                    "author", "location", "category"
+                )
             )
         return get_published_posts(Post.objects).filter(author=current_user)
 
