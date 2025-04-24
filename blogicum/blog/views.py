@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.db.models import Count
 from django.http import Http404
 from django.views import generic
@@ -19,7 +18,7 @@ User = get_user_model()
 
 def get_annotated_posts(queryset):
     return queryset.annotate(comment_count=Count("comments")).order_by(
-        "-pub_date"
+        *Post._meta.ordering
     )
 
 
